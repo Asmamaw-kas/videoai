@@ -1,0 +1,23 @@
+services:
+  - type: worker
+    name: videoai-telegram-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false          # set manually in Render dashboard
+      - key: ADMIN_IDS
+        sync: false
+      - key: CBE_ACCOUNT
+        sync: false
+      - key: TELEBIRR_ACCOUNT
+        sync: false
+      - key: ACCOUNT_NAME
+        sync: false
+      - key: DB_PATH
+        value: /data/subscriptions.db   # persistent disk path
+    disk:
+      name: bot-data
+      mountPath: /data
+      sizeGB: 1
