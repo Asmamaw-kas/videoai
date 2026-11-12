@@ -630,7 +630,14 @@ def main() -> None:
     # Conversation handler — covers the full subscription flow
     # ──────────────────────────────────────────────────────────────
     conv = ConversationHandler(
-        entry_points=[CommandHandler("start", cmd_start)],
+        entry_points=[
+            CommandHandler("start",   cmd_start),
+            # Allow re-entry from buttons shown after END (cancel screen,
+            # post-screenshot screen, status screen)
+            CallbackQueryHandler(cmd_start,       pattern=r"^nav:home$"),
+            CallbackQueryHandler(cb_welcome,      pattern=r"^welcome:start$"),
+            CallbackQueryHandler(cb_status_check, pattern=r"^status:check$"),
+        ],
         states={
             # Welcome screen
             STATE_WELCOME: [
@@ -672,10 +679,6 @@ def main() -> None:
     )
 
     app.add_handler(conv)
-
-    # Status button outside conversation (after END)
-    app.add_handler(CallbackQueryHandler(cb_status_check, pattern=r"^status:check$"))
-    app.add_handler(CallbackQueryHandler(cb_nav,          pattern=r"^nav:home$"))
 
     app.add_handler(CommandHandler("mystatus", cmd_mystatus))
 
