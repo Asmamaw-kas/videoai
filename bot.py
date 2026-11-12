@@ -92,7 +92,7 @@ def payment_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton("🏦 CBE ባንክ",  callback_data="pay:CBE"),
             InlineKeyboardButton("📱 Telebirr", callback_data="pay:Telebirr"),
         ],
-        [InlineKeyboardButton("◀️ ተመለስ", callback_data="nav:back_to_confirm")],
+        [InlineKeyboardButton("◀️ ተመለስ", callback_data="pay:back_to_confirm")],
     ])
 
 
@@ -362,17 +362,19 @@ async def cb_choose_payment(
             f"  👤 የባለቤት ስም፦  {config.ACCOUNT_NAME}\n"
         )
 
-    # ትዕዛዙን ወደ ዳታቤዝ ያስቀምጡ
-    user = query.from_user
-    order_id = await db.create_order(
-        user_id=user.id,
-        username=user.username,
-        full_name=user.full_name,
-        num_emails=context.user_data["num_emails"],
-        price=context.user_data["price"],
-        emails=context.user_data["emails_collected"],
-    )
-    context.user_data["order_id"] = order_id
+    # Only create the order once — if the user goes back and re-selects
+    # a payment method, reuse the existing order_id.
+    if not context.user_data.get("order_id"):
+        user = query.from_user
+        order_id = await db.create_order(
+            user_id=user.id,
+            username=user.username,
+            full_name=user.full_name,
+            num_emails=context.user_data["num_emails"],
+            price=context.user_data["price"],
+            emails=context.user_data["emails_collected"],
+        )
+        context.user_data["order_id"] = order_id
 
     await query.edit_message_text(
         f"{step_header(5)}\n"
