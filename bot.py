@@ -11,6 +11,7 @@ Main bot — ሙሉ በሙሉ በአማርኛ ቋንቋ።
     → ማረጋገጫ ጠብቅ
 """
 
+import asyncio
 import logging
 import os
 import re
@@ -612,6 +613,11 @@ def main() -> None:
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     logger.info("Flask health server started.")
+
+    # Python 3.10+ (and 3.14) no longer create a default event loop
+    # automatically. Create one explicitly before PTB needs it.
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
     app = (
         Application.builder()
