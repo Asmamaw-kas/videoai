@@ -1,5 +1,5 @@
 services:
-  - type: worker
+  - type: web
     name: videoai-telegram-bot
     runtime: python
     buildCommand: pip install -r requirements.txt
@@ -16,7 +16,9 @@ services:
       - key: ACCOUNT_NAME
         sync: false
       - key: DB_PATH
-        value: /data/subscriptions.db   # persistent disk path
+        value: /data/subscriptions.db
+      - key: PORT
+        value: 10000
     disk:
       name: bot-data
       mountPath: /data

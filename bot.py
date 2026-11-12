@@ -12,7 +12,10 @@ Main bot — ሙሉ በሙሉ በአማርኛ ቋንቋ።
 """
 
 import logging
+import os
 import re
+import threading
+from flask import Flask
 from telegram import (
     Update,
     InlineKeyboardButton,
@@ -573,6 +576,25 @@ async def fallback_msg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 # ===========================================================================
+# Tiny Flask web server — keeps Render free web service alive
+# ===========================================================================
+
+flask_app = Flask(__name__)
+
+@flask_app.route("/")
+def health():
+    return "✅ VideoAI Bot is running!", 200
+
+@flask_app.route("/health")
+def healthcheck():
+    return {"status": "ok", "service": "videoai-telegram-bot"}, 200
+
+def run_flask() -> None:
+    port = int(os.environ.get("PORT", 10000))
+    flask_app.run(host="0.0.0.0", port=port)
+
+
+# ===========================================================================
 # Application setup
 # ===========================================================================
 
@@ -654,6 +676,12 @@ def main() -> None:
     ))
 
     logger.info("Bot is running…")
+    # Start the Flask health server in a background thread so Render's
+    # free web service tier keeps the process alive.
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    logger.info("Flask health server started.")
+
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
