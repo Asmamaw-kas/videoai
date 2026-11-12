@@ -607,6 +607,12 @@ def main() -> None:
     if not config.BOT_TOKEN:
         raise ValueError("BOT_TOKEN is not set in your .env file.")
 
+    # Start Flask in a daemon thread FIRST so the port is bound before
+    # PTB takes over the main thread's event loop.
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    logger.info("Flask health server started.")
+
     app = (
         Application.builder()
         .token(config.BOT_TOKEN)
@@ -676,12 +682,6 @@ def main() -> None:
     ))
 
     logger.info("Bot is running…")
-    # Start the Flask health server in a background thread so Render's
-    # free web service tier keeps the process alive.
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-    logger.info("Flask health server started.")
-
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 

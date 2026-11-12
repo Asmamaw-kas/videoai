@@ -6,7 +6,7 @@ services:
     startCommand: python bot.py
     envVars:
       - key: BOT_TOKEN
-        sync: false          # set manually in Render dashboard
+        sync: false
       - key: ADMIN_IDS
         sync: false
       - key: CBE_ACCOUNT
@@ -19,6 +19,8 @@ services:
         value: /data/subscriptions.db
       - key: PORT
         value: 10000
+      - key: PYTHON_VERSION
+        value: 3.11.9
     disk:
       name: bot-data
       mountPath: /data
