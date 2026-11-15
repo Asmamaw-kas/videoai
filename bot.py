@@ -592,6 +592,21 @@ def health():
 def healthcheck():
     return {"status": "ok", "service": "videoai-telegram-bot"}, 200
 
+def self_ping() -> None:
+    """Ping our own URL every 10 minutes to prevent Render free tier spin-down."""
+    import time, urllib.request
+    render_url = os.environ.get("RENDER_EXTERNAL_URL", "")
+    if not render_url:
+        logger.info("RENDER_EXTERNAL_URL not set — self-ping disabled.")
+        return
+    while True:
+        time.sleep(600)   # 10 minutes
+        try:
+            urllib.request.urlopen(f"{render_url}/health", timeout=10)
+            logger.info("Self-ping OK.")
+        except Exception as e:
+            logger.warning("Self-ping failed: %s", e)
+
 def run_flask() -> None:
     port = int(os.environ.get("PORT", 10000))
     flask_app.run(host="0.0.0.0", port=port)
@@ -610,11 +625,13 @@ def main() -> None:
     if not config.BOT_TOKEN:
         raise ValueError("BOT_TOKEN is not set in your .env file.")
 
-    # Start Flask in a daemon thread FIRST so the port is bound before
-    # PTB takes over the main thread's event loop.
+    # Start Flask health server + self-ping in daemon threads
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     logger.info("Flask health server started.")
+
+    ping_thread = threading.Thread(target=self_ping, daemon=True)
+    ping_thread.start()
 
     # Python 3.10+ (and 3.14) no longer create a default event loop
     # automatically. Create one explicitly before PTB needs it.

@@ -19,6 +19,11 @@ services:
         value: /data/subscriptions.db
       - key: PORT
         value: 10000
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          type: web
+          name: videoai-telegram-bot
+          property: host
       - key: PYTHON_VERSION
         value: 3.11.9
     disk:
